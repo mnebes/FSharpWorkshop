@@ -67,10 +67,9 @@ open System.IO
 // File.ReadAllLines(path)
 // returns an array of strings for each line 
 
+
 // [ YOUR CODE GOES HERE! ]
-
-
-
+let readLines = File.ReadAllLines "shoppingcartpositions.csv"
 
 // 2. CLEANING UP HEADERS
  
@@ -87,9 +86,11 @@ let twoToFive = someNumbers.[ 1 .. 4 ] // grab a slice
 let upToThree = someNumbers.[ .. 2 ] 
 // </F# QUICK-STARTER> 
 
+
 // [ YOUR CODE GOES HERE! ]
+let dropHeader (x:_[]) = x.[1..]
 
-
+let linesWithoutHeader = dropHeader readLines
 
 
 // 3. EXTRACTING COLUMNS
@@ -120,8 +121,7 @@ let splitResult = csvToSplit.Split(',')
  
  
 // [ YOUR CODE GOES HERE! ]
-
-
+let splitLines = linesWithoutHeader |> Array.map (fun column -> column.Split(','))
 
  
 // 4. MODELING WITH TYPES
@@ -131,7 +131,9 @@ let splitResult = csvToSplit.Split(',')
 // a more useful form. Let's create a type that will hold
 // the information for each shopping cart item.
 
+
 // <F# QUICK-STARTER>  
+
 // Record quick starter: we can declare a 
 // Record (a lightweight, immutable class) type that way:
 type Example = { Label:int; Description:string; Id:int }
@@ -140,6 +142,8 @@ let example = { Label = 1; Description = "Much wow"; Id = 1 }
 // you can nest records within each other
 type MyExample = { Name:string; Examples:Example[] }
 let myExample = { Name = "yo"; Examples = [| example |]}
+
+
 // Type conversion starter:
 // You can use your familiar dotnet apis to convert between basic types:
 // For ints:
@@ -151,16 +155,38 @@ let convertedInt = Convert.ToInt32("42")
 let convertedDecimal = Convert.ToDecimal("43.2")
 // </F# QUICK-STARTER>
 
+
 // Now create record that will hold the raw shopping card item
 // information and convert the input data to use your new type.
 // Then create a type that represents a shopping cart for a single customer
 // It should contain all the items of one customer
 
 // [ YOUR CODE GOES HERE! ]
+type ShoppingCartItemData = { CustomerId: int; ItemId: int; ItemName: string; Count: int; UnitPrice: decimal }
+let shoppingCartItems = 
+    splitLines 
+    |> Array.map (fun line -> 
+    {
+        CustomerId = (int)line.[0]
+        ItemId = (int)line.[1]
+        ItemName = line.[2]
+        Count = (int)line.[3]
+        UnitPrice = Convert.ToDecimal(line.[4])
+    })
 
+type ShoppingCartItem = { ItemId: int; ItemName: string; Count: int; UnitPrice: decimal }
+type ShoppingCart = { CustomerId: int; ShoppingCartItems: ShoppingCartItem[] }
 
-
-
+let shoppingCarts = 
+    shoppingCartItems 
+    |> Array.groupBy (fun itemData -> itemData.CustomerId)
+    |> Array.map (fun (customerId, itemDatas) -> 
+        {
+            CustomerId = customerId; 
+            ShoppingCartItems = 
+                itemDatas |> Array.map (fun itemData -> 
+                    {ItemId = itemData.ItemId; ItemName = itemData.ItemName; Count = itemData.Count; UnitPrice = itemData.UnitPrice})
+        })
 
 // 5. VALIDATION
 
@@ -172,18 +198,21 @@ let convertedDecimal = Convert.ToDecimal("43.2")
 // and returns a boolean indicating if an item is valid.
 
 // [ YOUR CODE GOES HERE! ]
+let amountIsNonPositive shoppingCartItem =
+    shoppingCartItem.Count <= 0
 
-
-
+let priceIsNegative shoppingCartItem =
+    shoppingCartItem.UnitPrice < 0.0m
 
 // Now use these functions to filter out the shopping carts containing
 // invalid entries
 // Array functions such as Array.filter and Array.exists may come in handy.
 
 // [ YOUR CODE GOES HERE! ]
-
-
-
+let validShoppingCarts =
+    shoppingCarts
+    |> Array.filter (fun shoppingCart -> shoppingCart.ShoppingCartItems |> Array.exists amountIsNonPositive |> not)
+    |> Array.filter (fun shoppingCart -> shoppingCart.ShoppingCartItems |> Array.exists priceIsNegative |> not)
 
 // 6. ORDER CREATION
 
@@ -238,11 +267,34 @@ let doSomthingColorful palette =
 
 // </F# QUICK-STARTER>
 
-
 // now design your order type and create orders out of shopping carts!
+
+
 // [ YOUR CODE GOES HERE! ]
+type SalesPosition = { Name:string; ItemCount:int; UnitPrice:decimal }
+type DiscountPosition = { Name:string; Amount:decimal }
+type OrderPosition =
+    | SalesPosition of SalesPosition
+    | DiscountPosition of DiscountPosition
+type Order = 
+    {
+        CustomerId:int
+        OrderDate:DateTime
+        OrderPositions: OrderPosition[]
+    }
 
+let mapToOrder (shoppingCart: ShoppingCart) =
+    {
+        CustomerId = shoppingCart.CustomerId
+        OrderDate = DateTime.Now
+        OrderPositions =
+            shoppingCart.ShoppingCartItems
+            |> Array.map (fun item -> SalesPosition { Name=item.ItemName; ItemCount=item.Count; UnitPrice=item.UnitPrice } )
+    }
 
+let orders =
+    validShoppingCarts
+    |> Array.map mapToOrder
 
 // Now, calculate the price of each order and modify those that cost more than 1000 
 // with a discount position of 20 and calculate sums again
@@ -263,3 +315,29 @@ let myNewRecord = { myRecord with Test = "Blah" }
 
 
 // [ YOUR CODE GOES HERE! ]
+let calculateSum order =
+    order.OrderPositions
+    |> Array.fold (fun acc position -> 
+        match (position) with
+        | SalesPosition sp -> acc + (decimal)sp.ItemCount * sp.UnitPrice
+        | DiscountPosition dp -> acc - dp.Amount
+    ) 0.0m
+
+let addDiscount order =
+    let discount = DiscountPosition { Name = "super discount"; Amount = 20.0m }
+    { order with OrderPositions = Array.append order.OrderPositions [| discount|] }
+
+let addDiscountIfQualifies order =
+    let sum = calculateSum order
+    if (sum > 1000m) then
+        addDiscount order
+    else
+        order    
+
+orders
+|> Array.map calculateSum
+
+let ordersWithDiscounts =
+    orders
+    |> Array.map addDiscountIfQualifies
+    |> Array.map calculateSum
