@@ -92,6 +92,8 @@ open System.IO
 // Array slicing quick starter:
 // Let's start with an Array of ints:
 let someNumbers = [| 0 .. 10 |] // create an array from 0 to 10
+// Array literals can be created with [| opening and |], if you
+// omit the | symbol and use only [ ] you are creating a list (linked list).
 // You can access Array elements by index:
 let first = someNumbers.[0] 
 // You can also slice the array:
