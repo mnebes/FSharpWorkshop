@@ -10,29 +10,34 @@
 // see what happens, and tweak them to fit your goals!
 
 // 0. GETTING READY
- 
+
 // <F# QUICK-STARTER> 
 // With F# Script files (.fsx) and F# Interactive,
 // you can "live code" and see what happens.
 
-// Try typing let x = 42 in the script file, 
-// right-click and select "Execute in interactive".
-// You can also hit ALT + ENTER on a line to send it to
-// F# interactive (FSI). This also works in VS Code (ALT+ENTER).
+// Try typing let i = 1337 in the script file, 
+// right-click and select "Execute in interactive" (Visual Studio) or ALT+ENTER (Visual Studio Code).
+
+// HINT: while you can write directly into FSI (F# Interactive), you need 
+// to end each statement with ";;" for it to be executed and you have to watch out 
+// for the correct indentation. Hence it is much easier to write your code
+// in a script file like this and "send" it to interactive for execution.
 
 // let...
 
 // let "binds" the value on the right to a name.
 
 // let binds to a value are immutable, if you bind 42 to x:
-// let x = 42
-// you cannot change this value. You *can* make a value mutable
-// but you have to be explicit about it:
-// let mutable y = 42
-// y <- 43
+let x = 42
+// you cannot change this value.
+// x = 43 will give you a compile error
+// You *can* make a value mutable but you have to be explicit about it:
+let mutable y = 42
+y <- 43
 
-
-// Now execute the following lines in FSI (highlight both
+// Just as you have bound the value of 42 to the name "x" you can
+// bind any other expression to a name.
+// Execute the following lines in FSI (highlight both
 // lines and execute them "together"):
 let greet name = 
     printfn "Hello, %s" name
@@ -43,6 +48,13 @@ let greet name =
 // the following and sending it to FSI:
 
 // greet "World"
+
+// Indentations
+// As you might have noticed, F# relies on levels of indentation
+// to scope the code. Whenever you would open a curly brace
+// in C# you should just add a level of indentation in F#
+// If your function is more than one line long, you HAVE TO 
+// use a line break after "=" on the first line (see "greet").
 
 // </F# QUICK-STARTER> 
 
@@ -111,6 +123,11 @@ let lengths = Array.map (fun (s:string) -> s.Length) strings
 // done using the forward pipe operator, 
 // which makes it look nicer:
 let lengths2 = strings |> Array.map (fun s -> s.Length)
+
+// The "fun" part of the above declaration is how you define lambda
+// functions in F#. It supports automatic destructuring i.e. if an input 
+// is a tuple, "fun a, b ->" makes the tuple elemts available inside the lambda
+
 // </F# QUICK-STARTER> 
 
  
@@ -151,10 +168,12 @@ let convertedInt = Convert.ToInt32("42")
 let convertedDecimal = Convert.ToDecimal("43.2")
 // </F# QUICK-STARTER>
 
-// Now create record that will hold the raw shopping card item
+// Now create record that will hold the raw shopping cart item
 // information and convert the input data to use your new type.
-// Then create a type that represents a shopping cart for a single customer
-// It should contain all the items of one customer
+// Then create a type that represents a shopping cart for a single customer.
+// It should contain all the items of one customer.
+// You can explore the functions in collection Modules like "Array" to
+// discover what kind of operations (e.g. fold, groupBy etc) are supported by standard library.
 
 // [ YOUR CODE GOES HERE! ]
 
@@ -177,7 +196,7 @@ let convertedDecimal = Convert.ToDecimal("43.2")
 
 
 // Now use these functions to filter out the shopping carts containing
-// invalid entries
+// invalid entries.
 // Array functions such as Array.filter and Array.exists may come in handy.
 
 // [ YOUR CODE GOES HERE! ]
@@ -215,6 +234,15 @@ type ColorSystem =
     | RGB of red:int * green:int * blue:int
     | CMYK of cyan:int * magenta:int * yellow:int * black:int
 
+// With "int * int * int" we have defined a tuple with 3 int values.
+// This is nice for simple or ad-hoc data types, but for a more self documenting code
+// you can use record types:
+type HSL = { hue: int; saturation: float; lightness: float }
+type ColorSystemExtended =
+    | RGB of red:int * green:int * blue:int
+    | CMYK of cyan:int * magenta:int * yellow:int * black:int
+    | HSL of HSL
+
 // <BORING DETAILS>
 // It is part of the so-called "algebraic type system" of F# which includes
 // sum-types and product-types.
@@ -230,11 +258,17 @@ type ColorSystem =
 // is 4294967296 + 2
 // </BORING DETAILS>
 
+// To instatiate a union type, you need to use one of its constuctors along 
+// with its value:
+let blue = RGB (red=0, green=0, blue=255) // names are optional
+let alsoBlue = HSL { hue=240; saturation=100.0; lightness=50.0 }
+
 // The most common way to consume these types is via pattern matching:
 let doSomthingColorful palette =
     match (palette) with
     | RGB (r,g,b) -> (* do something rgb-ish *) ignore
     | CMYK(c,m,y,k) -> (* do something cmyk-ish*) ignore
+    | HSL h -> (* access values via dot notation: h.hue *) ignore
 
 // </F# QUICK-STARTER>
 
