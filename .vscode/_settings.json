@@ -1,3 +1,3 @@
 {
-    "FSharp.fsiFilePath": "fsi.cmd"
+    "FSharp.fsiFilePath": "${workspaceFolder}/fsi.cmd"
 }

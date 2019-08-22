@@ -44,6 +44,12 @@ let greet name =
 
 // let also binds a name to a function.
 // greet is a function with one argument, name.
+
+// The type of the "name" argument was inferred to be string
+// from it's usage. Sometimes though it is not possible and you have to
+// help the compiler and add a type hint like so:
+// let greet (name:string) = ...
+
 // You should be able to call this function by entering
 // the following and sending it to FSI:
 
